@@ -32,12 +32,25 @@ const app = new Elysia()
   }))
   .use(scrapeRoutes)
   .onError(({ code, error, set }) => {
-    console.log("Error occurred:", error);
     if (code === "NOT_FOUND") {
       set.status = 404;
       return {
         success: false,
         message: (error as Error).message || "Not Found",
+      };
+    }
+    if (code === "VALIDATION") {
+      set.status = 400;
+      return {
+        success: false,
+        message: JSON.parse((error as Error).message)[0]?.message || "Validation Error",
+      };
+    }
+    if (code === "UNKNOWN") {
+      set.status = 400;
+      return {
+        success: false,
+        message: (error as Error).message,
       };
     }
     set.status = 500;

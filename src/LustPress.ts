@@ -9,7 +9,7 @@ const keyv = process.env.REDIS_URL
   : new Keyv();
 
 keyv.on("error", (err) => console.log("Connection Error", err));
-const ttl = 1000 * 60 * 60 * Number(process.env.EXPIRE_CACHE || "1");
+const ttl = 1000 * 60 * 60 * Number(process.env.EXPIRE_CACHE);
 
 const GEO_TIMEOUT_MS = 3000;
 let cachedLastLocation: string | null = null;
@@ -25,12 +25,14 @@ function cachedLocationOrUnknown(): string {
 class LustPress {
   url: string;
   useragent: string;
-  private browserUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
+  private browserUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36";
   private cookieCache: { [domain: string]: string } = {};
 
   constructor() {
     this.url = "";
-    this.useragent = `${pkg.name}/${pkg.version} Bun/${Bun.version}`;
+    this.browserUA =
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36";
+    this.useragent = process.env.USER_AGENT || `${pkg.name}/${pkg.version} Bun/${Bun.version}`;
   }
 
   async getPornhubCookies(): Promise<string> {
@@ -101,20 +103,23 @@ class LustPress {
 
     console.log(`[FETCH] ${url}`);
     let res = await fetch(url, { headers, redirect: "follow" });
-    let text = await res.text();
+    let arrayBuf = await res.arrayBuffer();
+    let body = Buffer.from(arrayBuf);
 
-    if (isPornhub && text.includes("leastFactor")) {
+    if (isPornhub && body.toString("utf8").includes("leastFactor")) {
       console.log("Challenge detected at target URL. Re-authenticating...");
       this.cookieCache[domain] = await this.getPornhubCookies();
       res = await fetch(url, { 
         headers: { ...headers, Cookie: this.cookieCache[domain] },
         redirect: "follow" 
       });
-      text = await res.text();
+      arrayBuf = await res.arrayBuffer();
+      body = Buffer.from(arrayBuf);
     }
 
-    const body = Buffer.from(text);
-    if (!url.includes("/random")) await keyv.set(url, body, ttl);
+    if (res.ok && !url.includes("/random")) {
+      await keyv.set(url, body, ttl);
+    }
     return body;
   }
 
