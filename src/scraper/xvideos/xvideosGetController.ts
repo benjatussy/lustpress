@@ -9,7 +9,7 @@ export async function scrapeContent(url: string) {
     const resolve = await lust.fetchBody(url);
     const $ = load(resolve);
 
-    class Xvideos { 
+    class Xvideos {
       link: string;
       id: string;
       title: string;
@@ -35,12 +35,17 @@ export async function scrapeContent(url: string) {
         this.views = $("div#v-views").find("strong.mobile-hide").text() || "None";
         this.rating = $("span.rating-total-txt").text() || "None";
         this.publish = $("script[type='application/ld+json']").text() || "None";
-        this.publish = this.publish
-          .split("uploadDate")[1]
-          .split("}")[0]
-          .split(":")[1]
-          .replace(/"/g, "")
-          .replace(/,/g, "") || "None";
+        if (this.publish.includes("uploadDate")) {
+          this.publish = this.publish
+            .split("uploadDate")[1]
+            .split("}")[0]
+            .split(":")[1]
+            .replace(/"/g, "")
+            .replace(/,/g, "")
+            .trim();
+        } else {
+          this.publish = "None";
+        }
         this.upVote = $("span.rating-good-nbr").text() || "None";
         this.downVote = $("span.rating-bad-nbr").text() || "None";
         const thumb = $("script")
@@ -65,7 +70,7 @@ export async function scrapeContent(url: string) {
         this.embed = this.embed.split("iframe")[1].split(" ")[1].replace(/src=/g, "").replace(/"/g, "") || "None";
       }
     }
-    
+
     const xv = new Xvideos();
     const data: IVideoData = {
       success: true,
@@ -86,7 +91,7 @@ export async function scrapeContent(url: string) {
       assets: lust.removeAllSingleQuoteOnArray([xv.embed, xv.thumbnail, xv.bigimg, xv.video])
     };
     return data;
-    
+
   } catch (err) {
     const e = err as Error;
     throw Error(e.message);
