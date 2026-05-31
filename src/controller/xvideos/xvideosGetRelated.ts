@@ -4,7 +4,7 @@ import c from "../../utils/options";
 export async function relatedXvideos({ query }: { query: { id: string } }) {
   try {
     const { id } = query;
-    const url = `${c.XVIDEOS}/${id}`;
+    const url = id.startsWith("http") ? id : `${c.XVIDEOS}/${id}`;
     const data = await scrapeContent(url);
     return data;
   } catch (err) {
