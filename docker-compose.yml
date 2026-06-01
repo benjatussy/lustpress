@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  lustpress:
+    # Build from local source — NOT from the pre-built ghcr.io image
+    # This ensures your fixes in src/ are included in the container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lustpress
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Optional: set cache TTL in hours (default: 1)
+      - EXPIRE_CACHE=1
+      # Optional: connect Redis for persistent cache across restarts
+      # - REDIS_URL=redis://redis:6379
+    # No volumes needed — we build the code INTO the image
+
+  # Optional Redis cache (uncomment if you want persistent caching)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: lustpress-redis
+  #   restart: unless-stopped
+  #   ports:
+  #     - "6379:6379"

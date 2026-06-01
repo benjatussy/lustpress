@@ -32,7 +32,7 @@ export async function scrapeContent(url: string) {
       constructor() {
         this.link = $("link[rel='canonical']").attr("href") || "None";
         this.id = this.link.split("/")[4] || "None";
-        this.title = $("meta[property='og:title']").attr("content") || "None";
+        this.title = $("meta[property='og:title']").attr("content") || $("title").text() || "None";
         this.image = $("meta[property='og:image']").attr("content") || "None";
 
         // defaults

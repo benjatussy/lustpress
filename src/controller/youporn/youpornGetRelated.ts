@@ -4,7 +4,7 @@ import c from "../../utils/options";
 export async function relatedYouporn({ query }: { query: { id: string } }) {
   try {
     const { id } = query;
-    const url = `${c.YOUPORN}/watch/${id}`;
+    const url = id.startsWith("http") ? id : `${c.YOUPORN}/watch/${id}`;
     const data = await scrapeContent(url);
     return data;
   } catch (err) {
@@ -12,4 +12,3 @@ export async function relatedYouporn({ query }: { query: { id: string } }) {
     throw new Error(e.message);
   }
 }
-

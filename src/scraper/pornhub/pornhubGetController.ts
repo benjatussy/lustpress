@@ -35,7 +35,8 @@ export async function scrapeContent(url: string) {
         this.upVote = $("span.votesUp").attr("data-rating") || "None";
         this.downVote = $("span.votesDown").attr("data-rating") || "None";
         this.video =
-          $("meta[property='og:video:url']").attr("content") || "None";
+          $("meta[property='og:video:url']").attr("content") ||
+          (this.id !== "None" ? `https://www.pornhub.com/embed/${this.id}` : "None");
         this.tags = $("div.video-info-row")
           .find("a")
           .map((i, el) => {

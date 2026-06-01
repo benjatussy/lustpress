@@ -24,11 +24,18 @@ export async function scrapeContent(url: string) {
         this.search = $("a.video-thumb__image-container")
           .map((i, el) => {
             const link = $(el).attr("href") || "";
+            const slug = link.split("/")[4] || "";
+            let titleFromLink = "None";
+            if (slug) {
+              const parts = slug.split("-");
+              if (parts.length > 1) parts.pop();
+              titleFromLink = parts.join(" ");
+            }
 
             return {
               link: link,
-              id: link.split("/")[4] || "None",
-              title: $(el).find("img").attr("alt") || "None",
+              id: slug || "None",
+              title: $(el).find("img").attr("alt") || titleFromLink,
               image: $(el).find("img").attr("src") || "None",
               duration: duration[i] || "None",
               views: views[i] || "None",
