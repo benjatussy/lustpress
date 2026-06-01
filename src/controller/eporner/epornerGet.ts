@@ -4,16 +4,14 @@ import c from "../../utils/options";
 export async function getEporner({ query }: { query: { id: string } }) {
   try {
     const { id } = query;
-    let path: string;
-
-    if (id.startsWith("video-")) {
-      path = id;
+    let url: string;
+    if (id.startsWith("http")) {
+      url = id;
+    } else if (id.startsWith("video-")) {
+      url = `${c.EPORNER}/${id}`;
     } else {
-      path = `hd-porn/${id}`;
+      url = `${c.EPORNER}/hd-porn/${id}`;
     }
-
-    const url = `${c.EPORNER}/${path}`;
-
     const data = await scrapeContent(url);
     return data;
   } catch (err) {
@@ -21,4 +19,3 @@ export async function getEporner({ query }: { query: { id: string } }) {
     throw new Error(e.message);
   }
 }
-

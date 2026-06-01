@@ -1,8 +1,6 @@
 import { load } from "cheerio";
-import LustPress from "../../LustPress";
+import { lust } from "../../LustPress";
 import { IVideoData } from "../../interfaces";
-
-const lust = new LustPress();
 
 export async function scrapeContent(url: string) {
   try {
@@ -21,53 +19,93 @@ export async function scrapeContent(url: string) {
       upVote: string;
       downVote: string;
       video: string;
+      videoLow: string;
+      videoHLS: string;
       tags: string[];
       models: string[];
       thumbnail: string;
       bigimg: string;
       embed: string;
+
       constructor() {
         this.link = $("meta[property='og:url']").attr("content") || "None";
-        this.id = this.link.split("/")[3] + "/" + this.link.split("/")[4] || "None";
+
+        // New URL format: /video.ALPHAID/title OR old /videoNUMBER/title
+        const pathParts = this.link.replace("https://www.xvideos.com/", "");
+        this.id = pathParts.split("/")[0] || "None";
+
         this.title = $("meta[property='og:title']").attr("content") || "None";
         this.image = $("meta[property='og:image']").attr("content") || "None";
         this.duration = $("meta[property='og:duration']").attr("content") || "0";
+
+        // views — strong.mobile-hide inside #v-views
         this.views = $("div#v-views").find("strong.mobile-hide").text() || "None";
         this.rating = $("span.rating-total-txt").text() || "None";
-        this.publish = $("script[type='application/ld+json']").text() || "None";
-        if (this.publish.includes("uploadDate")) {
-          this.publish = this.publish
-            .split("uploadDate")[1]
-            .split("}")[0]
-            .split(":")[1]
-            .replace(/"/g, "")
-            .replace(/,/g, "")
-            .trim();
+        this.upVote = $("span.rating-good-nbr").text() || "None";
+        this.downVote = $("span.rating-bad-nbr").text() || "None";
+
+        // Safe uploadDate extraction
+        const ldJson = $("script[type='application/ld+json']").text() || "";
+        if (ldJson.includes("uploadDate")) {
+          try {
+            const parsed = JSON.parse(ldJson);
+            this.publish = parsed.uploadDate || "None";
+          } catch {
+            const parts = ldJson.split("uploadDate");
+            if (parts.length > 1) {
+              this.publish = parts[1]
+                .split("}")[0]
+                .split(":")[1]
+                .replace(/"/g, "")
+                .replace(/,/g, "")
+                .trim();
+            } else {
+              this.publish = "None";
+            }
+          }
         } else {
           this.publish = "None";
         }
-        this.upVote = $("span.rating-good-nbr").text() || "None";
-        this.downVote = $("span.rating-bad-nbr").text() || "None";
-        const thumb = $("script")
-          .map((i, el) => {
-            return $(el).text();
-          }).get()
-          .filter((el) => el.includes("html5player.setThumbSlideBig"))[0] || "None";
-        this.thumbnail = thumb.match(/html5player.setThumbSlideBig\((.*?)\)/)?.[1] || "None";
-        this.bigimg = thumb.match(/html5player.setThumbUrl169\((.*?)\)/)?.[1] || "None";
-        this.video = thumb.match(/html5player.setVideoUrlHigh\((.*?)\)/)?.[1] || "None";
+
+        // Player data from inline script
+        const scripts = $("script").map((i, el) => $(el).text()).get();
+        const playerScript = scripts.find((s) => s.includes("html5player.setThumbSlideBig")) || "";
+
+        this.thumbnail = playerScript.match(/html5player\.setThumbSlideBig\('(.*?)'\)/)?.[1] || "None";
+        this.bigimg    = playerScript.match(/html5player\.setThumbUrl169\('(.*?)'\)/)?.[1] || "None";
+        this.video     = playerScript.match(/html5player\.setVideoUrlHigh\('(.*?)'\)/)?.[1] || "None";
+        this.videoLow  = playerScript.match(/html5player\.setVideoUrlLow\('(.*?)'\)/)?.[1] || "None";
+        this.videoHLS  = playerScript.match(/html5player\.setVideoHLS\('(.*?)'\)/)?.[1] || "None";
+
+        // Tags
         this.tags = $("a.is-keyword.btn.btn-default")
-          .map((i, el) => {
-            return $(el).text();
-          }).get();
+          .map((i, el) => $(el).text().trim())
+          .get();
+
+        // Models — from uploader or pornstar links
         this.models = $("li.model")
-          .map((i, el) => {
-            return $(el).find("a").attr("href") || "None";
-          }
-          ).get();
-        this.models = this.models.map((el) => el.split("/")[2]);
-        this.embed = $("input#copy-video-embed").attr("value") || "None";
-        this.embed = this.embed.split("iframe")[1].split(" ")[1].replace(/src=/g, "").replace(/"/g, "") || "None";
+          .map((i, el) => $(el).find("a").attr("href") || "")
+          .get()
+          .filter(Boolean)
+          .map((el) => el.split("/")[2] || el);
+
+        // Embed — the input value is HTML-encoded, decode it first
+        const embedRaw = $("input#copy-video-embed").attr("value") || "";
+        if (embedRaw) {
+          // Decode HTML entities (&lt; &gt; &quot;)
+          const decoded = embedRaw
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .replace(/&quot;/g, '"')
+            .replace(/&amp;/g, "&");
+          // Extract src="..."
+          const srcMatch = decoded.match(/src="([^"]+)"/);
+          this.embed = srcMatch?.[1] || "None";
+        } else {
+          // Fallback: build embed URL from video id
+          const vidId = this.id.replace("video.", "").replace(/^video(\d+)$/, "$1");
+          this.embed = `https://www.xvideos.com/embedframe/${vidId}`;
+        }
       }
     }
 

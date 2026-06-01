@@ -4,7 +4,7 @@ import c from "../../utils/options";
 export async function relatedPornhub({ query }: { query: { id: string } }) {
   try {
     const { id } = query;
-    const url = `${c.PORNHUB}/view_video.php?viewkey=${id}`;
+    const url = id.startsWith("http") ? id : `${c.PORNHUB}/view_video.php?viewkey=${id}`;
     const data = await scrapeContent(url);
     return data;
   } catch (err) {
@@ -12,4 +12,3 @@ export async function relatedPornhub({ query }: { query: { id: string } }) {
     throw new Error(e.message);
   }
 }
-
