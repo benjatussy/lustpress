@@ -22,7 +22,8 @@ export async function searchTxxx({
     const videos = Array.isArray(rawData.videos) ? rawData.videos : [];
 
     const data = videos.map((v) => ({
-      video_id: v.video_id,
+      id: String(v.video_id),
+      link: `https://txxx.com/videos/${v.video_id}/${v.dir || ""}/`,
       title: v.title,
       dir: v.dir,
       duration: v.duration,
@@ -33,7 +34,7 @@ export async function searchTxxx({
       dislikes: v.dislikes,
       image: v.scr,
       categories: v.categories ? v.categories.split(",") : [],
-      embed: `https://txxx.com/embed/${v.video_id}/`,
+      video: `https://txxx.com/embed/${v.video_id}/`,
     }));
 
     return {

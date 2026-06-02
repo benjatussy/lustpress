@@ -30,7 +30,7 @@ export async function scrapeContent(url: string) {
         rating: $(el).find(".mbrate").text().trim(),
         views: $(el).find(".mbvie").text().trim(),
         uploader: $(el).find(".mb-uploader a").text().trim(),
-        video: `https://www.eporner.com/embed/${id}`,
+        video: `https://www.eporner.com/embed/${id.startsWith("video-") ? id.replace("video-", "") : id}`,
       };
     })
     .get()

@@ -19,7 +19,8 @@ export async function randomTxxx() {
     const v = videos[Math.floor(Math.random() * videos.length)];
 
     const data = {
-      video_id: v.video_id,
+      id: String(v.video_id),
+      link: `https://txxx.com/videos/${v.video_id}/${v.dir || ""}/`,
       title: v.title,
       dir: v.dir,
       duration: v.duration,
@@ -30,7 +31,7 @@ export async function randomTxxx() {
       dislikes: v.dislikes,
       image: v.scr,
       categories: v.categories ? v.categories.split(",") : [],
-      embed: `https://txxx.com/embed/${v.video_id}/`,
+      video: `https://txxx.com/embed/${v.video_id}/`,
     };
 
     return {

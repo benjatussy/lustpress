@@ -16,6 +16,7 @@ services:
       - EXPIRE_CACHE=1
       # Optional: connect Redis for persistent cache across restarts
       # - REDIS_URL=redis://redis:6379
+<<<<<<< HEAD
     # No volumes needed — we build the code INTO the image
 
   # Optional Redis cache (uncomment if you want persistent caching)
@@ -25,3 +26,14 @@ services:
   #   restart: unless-stopped
   #   ports:
   #     - "6379:6379"
+=======
+      # No volumes needed — we build the code INTO the image
+
+      # Optional Redis cache (uncomment if you want persistent caching)
+      # redis:
+      #   image: redis:7-alpine
+      #   container_name: lustpress-redis
+      #   restart: unless-stopped
+      #   ports:
+      #     - "6379:6379"
+>>>>>>> 884da0a0b2d114ed912f6865d041188a1092bee6
